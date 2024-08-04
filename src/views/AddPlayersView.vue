@@ -23,7 +23,7 @@
         </v-btn>
       </div>
       <div class="main-container__add_players">
-        <p>{{ this.numPlayers }} / {{ this.totalPlayers }}</p>
+        <p>{{ numPlayers }} / {{ totalPlayers }}</p>
       </div>
       <div class="main-container__add_start_container">
         <v-btn class="main-container__add_start_button" @click="startGame"
@@ -35,6 +35,8 @@
 </template>
 
 <script>
+import { mapActions } from "vuex";
+
 export default {
   data() {
     return {
@@ -44,6 +46,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(["setPlayers"]),
     addTextField() {
       if (this.textFields.length < this.totalPlayers) {
         this.numPlayers++;
@@ -51,7 +54,14 @@ export default {
       }
     },
     startGame() {
-      console.log(this.textFields);
+      const players = this.textFields.map((name, index) => ({
+        name,
+        turno: index,
+        casilla: 0,
+        tragos: 0,
+      }));
+      this.setPlayers(players);
+      this.$router.push("/game");
     },
   },
 };
