@@ -14,16 +14,21 @@
           v-model="textFields[index]"
           variant="solo-filled"
           class="main-container__add_input"
-          label="Player Name"
+          label="Nombre del jugador"
         />
       </div>
-      <div>
-        <v-btn @click="addTextField">
+      <div class="main-container__add_plus_container">
+        <v-btn class="main-container__add_plus" @click="addTextField">
           <v-icon>mdi-plus</v-icon>
         </v-btn>
       </div>
-      <div>
-        <v-btn @click="startGame">Comenzar</v-btn>
+      <div class="main-container__add_players">
+        <p>{{ this.numPlayers }} / {{ this.totalPlayers }}</p>
+      </div>
+      <div class="main-container__add_start_container">
+        <v-btn class="main-container__add_start_button" @click="startGame"
+          >Comenzar</v-btn
+        >
       </div>
     </div>
   </div>
@@ -33,17 +38,20 @@
 export default {
   data() {
     return {
-      numPlayers: 0,
+      numPlayers: 1,
       totalPlayers: 10,
-      textFields: [""], // Inicializa con un campo de texto vacío
+      textFields: [""],
     };
   },
   methods: {
     addTextField() {
-      this.textFields.push(""); // Añade un nuevo campo de texto vacío al array
+      if (this.textFields.length < this.totalPlayers) {
+        this.numPlayers++;
+        this.textFields.push("");
+      }
     },
     startGame() {
-      console.log(this.textFields); // Realiza alguna acción con los valores de los campos de texto
+      console.log(this.textFields);
     },
   },
 };
@@ -70,7 +78,6 @@ export default {
   width: 100%;
   flex: 1;
   height: 100%;
-  background-color: aqua;
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -78,10 +85,39 @@ export default {
 }
 
 .main-container__add_input {
+  width: 80%;
+  margin: 0 auto;
 }
 
 .main-container__add_container {
   width: 100%;
-  background-color: red;
+}
+
+.main-container__add_plus {
+  width: 100%;
+  height: 3rem;
+  margin-bottom: 2rem;
+  border: 2px solid #f1df64;
+  background: #1b1b1b;
+  color: #f1df64;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.main-container__add_players {
+  margin-bottom: 1rem;
+  color: #f1df64;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.main-container__add_start_button {
+  width: 100%;
+  height: 3rem;
+  margin-bottom: 2rem;
+  background: #f1df64;
+  color: #1b1b1b;
+  font-size: 16px;
+  font-weight: 600;
 }
 </style>
