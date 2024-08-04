@@ -59,6 +59,8 @@ export default {
         turno: index,
         casilla: 0,
         tragos: 0,
+        hidalgos: 0,
+        ronda: 0,
       }));
       this.setPlayers(players);
       this.$router.push("/game");
