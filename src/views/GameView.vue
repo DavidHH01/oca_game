@@ -40,28 +40,28 @@
       </div>
     </div>
     <div v-else class="game-container__playing">
-      <div v-if="sortedPlayers.length > 0" class="HUD-container">
+      <div v-if="playersGame.length > 0" class="HUD-container">
         <div class="HUD-container__left">
           <div class="HUD-container__left_sub_container">
             <img
               class="HUD-container__left_square"
               :src="require('../assets/square_logo.png')"
             />
-            <h2>{{ sortedPlayers[actualIndex].casilla }} / 43</h2>
+            <h2>{{ playersGame[gameIndex].casilla }} / {{ totalSquares }}</h2>
           </div>
           <div class="HUD-container__left_sub_container">
             <img
               class="HUD-container__left_beer"
               :src="require('../assets/beer_logo.png')"
             />
-            <h2>x {{ sortedPlayers[actualIndex].tragos }}</h2>
+            <h2>x {{ playersGame[gameIndex].tragos }}</h2>
           </div>
           <div class="HUD-container__left_sub_container">
             <img
               class="HUD-container__left_skull"
               :src="require('../assets/skull.png')"
             />
-            <h2>x {{ sortedPlayers[actualIndex].hidalgos }}</h2>
+            <h2>x {{ playersGame[gameIndex].hidalgos }}</h2>
           </div>
         </div>
         <div class="HUD-container__center">
@@ -74,14 +74,14 @@
           <v-icon class="HUD-container__right_icon">mdi mdi-information</v-icon>
         </div>
       </div>
-      <div v-if="sortedPlayers.length > 0" class="screen-container">
+      <div v-if="playersGame.length > 0" class="screen-container">
         <div class="screen-container__player_turn">
-          <h2>Turno: {{ playersGame[actualIndex].name }}</h2>
+          <h2>Turno: {{ playersGame[gameIndex].name }}</h2>
         </div>
         <div class="screen-container__player_round">
-          <h3>Ronda: {{ playersGame[actualIndex].ronda }}</h3>
+          <h3>Ronda: {{ playersGame[gameIndex].ronda }}</h3>
         </div>
-        <div class="screen-container__card">
+        <div @click="onShowCard" class="screen-container__card">
           <img
             class="screen-container__card_img"
             :src="require('../assets/cards/Carta_Reverso.png')"
@@ -89,145 +89,203 @@
         </div>
         <div class="screen-container__actions">
           <v-btn
-            @click="rollDie(playersGame[actualIndex])"
+            @click="rollDie(playersGame[gameIndex].name)"
             class="screen-container__actions_button"
+            :disabled="isDie"
             >Tirar dado</v-btn
           >
-          <p>Has sacado: {{ playersGame[actualIndex].roll }}</p>
+          <p>Has sacado: {{ playersGame[gameIndex].roll }}</p>
         </div>
       </div>
     </div>
+    <CardModal
+      :isShow="isShowCardModal"
+      :cardImage="actualCardName"
+      @close="onCloseCardModal"
+    />
   </div>
 </template>
 
 <script>
+import CardModal from "@/components/CardModal.vue";
 export default {
+  components: {
+    CardModal,
+  },
   data() {
     return {
       isSelectedOrder: false,
       isStarted: false,
+      isDie: false,
+      isGameEnd: false,
+      isShowCardModal: false,
       actualIndex: 0,
+      actualCardName: "",
+      gameIndex: 0,
       playersGame: [],
+      totalSquares: 43,
       cards: [
         {
-          name: "Parabara.png",
+          name: require("../assets/cards/Parabara.png"),
           squares: [3, 18, 32],
           tragos: 0,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Oca_loca.png",
+          name: require("../assets/cards/Oca_loca.png"),
           squares: [7, 14, 17, 20, 24],
           tragos: 1,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Dioses_del_amor.png",
+          name: require("../assets/cards/Dioses_del_amor.png"),
           squares: [5, 25, 35],
           tragos: 0,
           hidalgo: 1,
           back: 0,
         },
         {
-          name: "No_te_sale_la_caca.png",
+          name: require("../assets/cards/No_te_sale_la_caca.png"),
           squares: [12, 30],
           tragos: 2,
           hidalgo: 0,
           back: 4,
         },
         {
-          name: "Tragos_locos.png",
+          name: require("../assets/cards/Tragos_locos.png"),
           squares: [8, 16, 26, 28, 39],
           tragos: 0,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Palabreo.png",
+          name: require("../assets/cards/Palabreo.png"),
           squares: [33, 38],
           tragos: 3,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Feliz_cum",
+          name: require("../assets/cards/Feliz_cum.png"),
           squares: [22, 42],
           tragos: 4,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Reglas_puneteras.jpg",
+          name: require("../assets/cards/Reglas_puneteras.jpg"),
           squares: [10, 19, 27],
           tragos: 0,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "moneda.png",
+          name: require("../assets/cards/moneda.png"),
           squares: [4, 9, 23],
-          tragos: 0,
+          tragos: 1,
           hidalgo: 0,
           back: 0,
         },
-        { name: "Todos.png", squares: [1], tragos: 1, hidalgo: 0, back: 0 },
-        { name: "Los_pibes.png", squares: [2], tragos: 1, hidalgo: 0, back: 0 },
-        { name: "Las_minas.png", squares: [6], tragos: 1, hidalgo: 0, back: 0 },
         {
-          name: "Ferxxo_mora.png",
+          name: require("../assets/cards/Todos.png"),
+          squares: [1],
+          tragos: 1,
+          hidalgo: 0,
+          back: 0,
+        },
+        {
+          name: require("../assets/cards/Los_pibes.png"),
+          squares: [2],
+          tragos: 1,
+          hidalgo: 0,
+          back: 0,
+        },
+        {
+          name: require("../assets/cards/Las_minas.png"),
+          squares: [6],
+          tragos: 1,
+          hidalgo: 0,
+          back: 0,
+        },
+        {
+          name: require("../assets/cards/Ferxxo_mora.png"),
           squares: [11],
           tragos: 1,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Verdad.png",
+          name: require("../assets/cards/Verdad.png"),
           squares: [13, 21],
           tragos: 0,
           hidalgo: 0,
           back: 0,
         },
-        { name: "El_cani.png", squares: [15], tragos: 2, hidalgo: 0, back: 2 },
-        { name: "Marry.png", squares: [29], tragos: 0, hidalgo: 0, back: 0 },
         {
-          name: "Racugrafia.png",
+          name: require("../assets/cards/El_cani.png"),
+          squares: [15],
+          tragos: 2,
+          hidalgo: 0,
+          back: 2,
+        },
+        {
+          name: require("../assets/cards/Marry.png"),
+          squares: [29],
+          tragos: 0,
+          hidalgo: 0,
+          back: 0,
+        },
+        {
+          name: require("../assets/cards/Racugrafia.png"),
           squares: [31],
           tragos: 3,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Baile_sensual.png",
+          name: require("../assets/cards/Baile_sensual.png"),
           squares: [34],
           tragos: 4,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Policia_maritima.png",
+          name: require("../assets/cards/Policia_maritima.png"),
           squares: [36],
           tragos: 3,
           hidalgo: 0,
           back: 0,
         },
         {
-          name: "Shin_chan.png",
+          name: require("../assets/cards/Shin_chan.png"),
           squares: [37],
           tragos: 5,
           hidalgo: 0,
           back: 0,
         },
-        { name: "Fantasma.png", squares: [40], tragos: 0, hidalgo: 1, back: 0 },
         {
-          name: "la_Borracha.png",
+          name: require("../assets/cards/Fantasma.png"),
+          squares: [40],
+          tragos: 0,
+          hidalgo: 1,
+          back: 0,
+        },
+        {
+          name: require("../assets/cards/La_Borracha.png"),
           squares: [41],
           tragos: 2,
           hidalgo: 0,
           back: 10,
         },
-        { name: "El_plan.png", squares: [43], tragos: 0, hidalgo: 1, back: 0 },
+        {
+          name: require("../assets/cards/El_plan.png"),
+          squares: [43],
+          tragos: 0,
+          hidalgo: 1,
+          back: 0,
+        },
       ],
     };
   },
@@ -267,27 +325,62 @@ export default {
       }
     },
     rollDie(name) {
-      console.log(name);
-
       const dice1 = Math.floor(Math.random() * 6) + 1;
       const total = dice1;
 
       for (let player of this.playersGame) {
         if (player.name.toLowerCase() == name.toLowerCase()) {
           player.roll = total;
+          player.casilla = player.casilla + total;
+          if (player.casilla > this.totalSquares) {
+            player.casilla = this.totalSquares;
+            this.isGameEnd = true;
+          }
         }
       }
+      this.isDie = true;
     },
     onToggleStart() {
       this.isStarted = true;
 
-      let i = 1;
+      let i = 0;
       for (let player of this.sortedPlayers) {
         player.turno = i;
+
+        i++;
+      }
+      this.playersGame = this.sortedPlayers;
+      for (let player of this.playersGame) {
         player.round++;
         player.roll = 0;
       }
-      this.playersGame = this.sortedPlayers;
+    },
+    onShowCard() {
+      for (let card of this.cards) {
+        for (let square of card.squares)
+          if (this.playersGame[this.gameIndex].casilla == square) {
+            this.playersGame[this.gameIndex].tragos =
+              this.playersGame[this.gameIndex].tragos + card.tragos;
+            this.playersGame[this.gameIndex].hidalgos =
+              this.playersGame[this.gameIndex].hidalgos + card.hidalgo;
+            this.playersGame[this.gameIndex].casilla =
+              this.playersGame[this.gameIndex].casilla - card.back;
+            this.actualCardName = card.name;
+            this.isShowCardModal = true;
+          }
+      }
+    },
+    onCloseCardModal() {
+      this.isShowCardModal = false;
+      this.isDie = false;
+      if (this.gameIndex < this.playersGame.length - 1) {
+        this.gameIndex++;
+      } else {
+        for (let player of this.playersGame) {
+          player.ronda++;
+        }
+        this.gameIndex = 0;
+      }
     },
   },
 };
