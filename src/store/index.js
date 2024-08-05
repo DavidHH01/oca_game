@@ -31,6 +31,10 @@ export default createStore({
     SET_CURRENT_PLAYER(state, index) {
       state.currentPlayerIndex = index;
     },
+    RESET_PLAYERS(state) {
+      state.players = [];
+      state.currentPlayerIndex = 0;
+    },
   },
   actions: {
     addPlayer({ commit }, player) {
@@ -47,6 +51,9 @@ export default createStore({
     },
     setCurrentPlayer({ commit }, index) {
       commit("SET_CURRENT_PLAYER", index);
+    },
+    resetPlayers({ commit }) {
+      commit("RESET_PLAYERS");
     },
   },
   modules: {},

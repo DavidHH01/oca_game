@@ -1,6 +1,6 @@
 <template>
   <div class="game-container">
-    <div v-if="!isStarted" class="select-order_container">
+    <div v-if="!isStarted && !isGameEnd" class="select-order_container">
       <div class="select-order_container__title">
         <h2>
           ¡Antes de empezar a jugar debéis seleccionar el orden de los
@@ -39,7 +39,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="game-container__playing">
+    <div v-else-if="isStarted && !isGameEnd" class="game-container__playing">
       <div v-if="playersGame.length > 0" class="HUD-container">
         <div class="HUD-container__left">
           <div class="HUD-container__left_sub_container">
@@ -81,7 +81,10 @@
         <div class="screen-container__player_round">
           <h3>Ronda: {{ playersGame[gameIndex].ronda }}</h3>
         </div>
-        <div @click="onShowCard" class="screen-container__card">
+        <div
+          @click="isDie ? onShowCard() : null"
+          class="screen-container__card"
+        >
           <img
             class="screen-container__card_img"
             :src="require('../assets/cards/Carta_Reverso.png')"
@@ -95,6 +98,29 @@
             >Tirar dado</v-btn
           >
           <p>Has sacado: {{ playersGame[gameIndex].roll }}</p>
+        </div>
+      </div>
+    </div>
+    <div v-else class="select-order_container">
+      <div class="select-order_container__title">
+        <h2>¡Felicidades has ganado {{ playerWinner.name }}!</h2>
+      </div>
+      <div class="select-order_container__body">
+        <div class="select-order_container__body_order">
+          <div
+            class="select-order_container__body_order_content"
+            v-for="(player, index) in sortedEndedPlayers"
+            :key="index"
+          >
+            {{ index + 1 }} - {{ player.name }}: Casillas:
+            {{ player.casilla }} Hidalgos: {{ player.hidalgos }} Tragos:
+            {{ player.tragos }}
+          </div>
+        </div>
+        <div class="return-container">
+          <v-btn @click="onRestart" class="return-button"
+            >Volver al inicio</v-btn
+          >
         </div>
       </div>
     </div>
@@ -119,6 +145,7 @@ export default {
       isDie: false,
       isGameEnd: false,
       isShowCardModal: false,
+      playerWinner: {},
       actualIndex: 0,
       actualCardName: "",
       gameIndex: 0,
@@ -295,6 +322,17 @@ export default {
         (a, b) => (b.roll || 0) - (a.roll || 0)
       );
     },
+    sortedEndedPlayers() {
+      return [...this.playersGame].sort((a, b) => {
+        if (b.casilla !== a.casilla) {
+          return b.casilla - a.casilla;
+        }
+        if (b.hidalgos !== a.hidalgos) {
+          return b.hidalgos - a.hidalgos;
+        }
+        return b.tragos - a.tragos;
+      });
+    },
   },
   mounted() {
     const players = this.$store.state.players || [];
@@ -335,10 +373,11 @@ export default {
           if (player.casilla > this.totalSquares) {
             player.casilla = this.totalSquares;
             this.isGameEnd = true;
+            this.playerWinner = player;
           }
         }
       }
-      this.isDie = true;
+      this.isDie = true; // Establece la bandera a true
     },
     onToggleStart() {
       this.isStarted = true;
@@ -356,23 +395,36 @@ export default {
       }
     },
     onShowCard() {
+      if (!this.isDie) {
+        console.log("No puedes mostrar la carta hasta que tires el dado.");
+        return; // Salir si no se ha tirado el dado
+      }
       for (let card of this.cards) {
-        for (let square of card.squares)
+        for (let square of card.squares) {
           if (this.playersGame[this.gameIndex].casilla == square) {
-            this.playersGame[this.gameIndex].tragos =
-              this.playersGame[this.gameIndex].tragos + card.tragos;
-            this.playersGame[this.gameIndex].hidalgos =
-              this.playersGame[this.gameIndex].hidalgos + card.hidalgo;
-            this.playersGame[this.gameIndex].casilla =
-              this.playersGame[this.gameIndex].casilla - card.back;
+            this.playersGame[this.gameIndex].tragos += card.tragos;
+            this.playersGame[this.gameIndex].hidalgos += card.hidalgo;
+            this.playersGame[this.gameIndex].casilla -= card.back;
             this.actualCardName = card.name;
             this.isShowCardModal = true;
           }
+        }
       }
     },
     onCloseCardModal() {
       this.isShowCardModal = false;
       this.isDie = false;
+
+      for (let player of this.playersGame) {
+        if (player.name.toLowerCase() == name.toLowerCase()) {
+          if (player.casilla > this.totalSquares) {
+            this.isGameEnd = true;
+            this.playerWinner = player;
+            return;
+          }
+        }
+      }
+
       if (this.gameIndex < this.playersGame.length - 1) {
         this.gameIndex++;
         for (let player of this.playersGame) {
@@ -384,6 +436,25 @@ export default {
         }
         this.gameIndex = 0;
       }
+    },
+    onRestart() {
+      this.isSelectedOrder = false;
+      this.isStarted = false;
+      this.isDie = false;
+      this.isGameEnd = false;
+      this.isShowCardModal = false;
+      this.playerWinner = {};
+      this.actualIndex = 0;
+      this.actualCardName = "";
+      this.gameIndex = 0;
+      this.playersGame = [];
+      this.totalSquares = 43;
+
+      // Restablecer jugadores en Vuex
+      this.$store.dispatch("resetPlayers");
+
+      // Redirigir al inicio
+      this.$router.push("/");
     },
   },
 };
@@ -606,5 +677,22 @@ export default {
   color: #f1df64;
   font-size: 18px;
   font-weight: 600;
+}
+
+.return-button {
+  width: 100%;
+  height: 3rem;
+  margin-bottom: 2rem;
+  background: #f1df64;
+  color: #1b1b1b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.return-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 </style>
