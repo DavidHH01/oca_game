@@ -375,6 +375,9 @@ export default {
       this.isDie = false;
       if (this.gameIndex < this.playersGame.length - 1) {
         this.gameIndex++;
+        for (let player of this.playersGame) {
+          player.roll = 0;
+        }
       } else {
         for (let player of this.playersGame) {
           player.ronda++;
